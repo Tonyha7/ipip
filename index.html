@@ -120,21 +120,23 @@
             const data = await response.json();
 
             // 根据不同API返回统一格式的数据
-            needLocation: true
             switch(apiType) {
                 case 'ipsb':
                     return {
                         ip: data.ip,
+                        needLocation: true
                     };
                     break;
                 case 'ipinfoapp':
                     return {
                         ip: data.ip,
+                        needLocation: true
                     };
                     break;
                 default:
                     return {
                         ip: data.ip,
+                        needLocation: true
                     };
             }
             throw new Error('获取IP信息失败');
