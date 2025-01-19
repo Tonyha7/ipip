@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>美团团定位</title>
+    <style>
+        #map {
+            height: 400px;
+            width: 100%;
+            margin-top: 20px;
+        }
+        #input-panel {
+            padding: 20px;
+            background: #f8f9fa;
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            padding: 8px;
+            margin-right: 10px;
+            width: 200px;
+        }
+        button {
+            padding: 8px 16px;
+            background: #4285f4;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #357abd;
+        }
+        #result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #e9ecef;
+            display: none;
+        }
+        .error {
+            color: #dc3545;
+            margin-top: 5px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="input-panel">
+        <input type="text" id="ip-input" placeholder="请输入IPv4地址" />
+        <button onclick="searchIP()">查询位置</button>
+        <button onclick="getCurrentIP()">获取当前IP</button>
+        <div id="ip-error" class="error"></div>
+        <div id="result"></div>
+    </div>
+    <div id="map"></div>
+
+    <script>
+        let map;
+        let marker;
+
+        // IP地址验证函数
+        function isValidIPv4(ip) {
+            const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/;
+            if (!ipv4Regex.test(ip)) return false;
+            
+            const parts = ip.split('.');
+            return parts.every(part => {
+                const num = parseInt(part, 10);
+                return num >= 0 && num <= 255;
+            });
+        }
+
+        // 获取当前IP
+        async function getCurrentIP() {
+            try {
+                const response = await fetch('http://httpbin.org/ip');
+                const data = await response.json();
+                const ip = data.origin;
+                
+                // 检查是否为IPv4地址
+                if (isValidIPv4(ip)) {
+                    document.getElementById('ip-input').value = ip;
+                    document.getElementById('ip-error').style.display = 'none';
+                    // 自动触发查询
+                    searchIP();
+                } else {
+                    document.getElementById('ip-error').textContent = '检测到IPv6地址，请输入IPv4地址';
+                    document.getElementById('ip-error').style.display = 'block';
+                }
+            } catch (error) {
+                document.getElementById('ip-error').textContent = '获取IP地址失败';
+                document.getElementById('ip-error').style.display = 'block';
+            }
+        }
+
+        // 初始化地图
+        function initMap() {
+            map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 12,
+                center: { lat: 39.91658, lng: 116.39072 }
+            });
+            
+            new google.maps.Marker({
+                position: { lat: 39.91658, lng: 116.39072 },
+                map: map,
+                title: '北京故宫',
+                icon: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png'
+            });
+            
+            getCurrentIP();
+        }
+
+        async function searchIP() {
+            const ipInput = document.getElementById('ip-input').value;
+            const resultDiv = document.getElementById('result');
+            const errorDiv = document.getElementById('ip-error');
+            
+            if (!isValidIPv4(ipInput)) {
+                errorDiv.textContent = '请输入有效的IPv4地址';
+                errorDiv.style.display = 'block';
+                resultDiv.style.display = 'none';
+                return;
+            }
+            
+            errorDiv.style.display = 'none';
+            
+            try {
+                const response = await fetch(`https://iploc.api.tonyha7.com/?ip=${ipInput}`);
+                const data = await response.json();
+                
+                // 显示结果
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = `
+                    位置信息：${data.country} ${data.province} ${data.city} ${data.district}
+                    <br>经度：${data.lng} 纬度：${data.lat}
+                `;
+
+                const position = { lat: parseFloat(data.lat), lng: parseFloat(data.lng) };
+                
+                if (marker) {
+                    marker.setMap(null);
+                }
+
+                marker = new google.maps.Marker({
+                    position: position,
+                    map: map,
+                    title: `${data.country} ${data.province} ${data.city}`
+                });
+
+                map.setCenter(position);
+            } catch (error) {
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = '查询失败，请检查IP地址是否正确';
+            }
+        }
+    </script>
+    <script
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg&callback=initMap"
+        defer
+    ></script>
+</body>
+</html>
