@@ -107,7 +107,7 @@
             
             switch(apiType) {
                 case 'ipsb':
-                    apiUrl = 'https://api.ip.sb/geoip';
+                    apiUrl = 'https://api-ipv4.ip.sb/ip';
                     break;
                 case 'ipinfoapp':
                     apiUrl = 'https://ipv4.my.ipinfo.app/api/ipDetails.php';
@@ -122,16 +122,16 @@
             // 根据不同API返回统一格式的数据
             switch(apiType) {
                 case 'ipsb':
-                        return {
-                            ip: data.ip,
-                            needLocation: true
-                        };
+                    return {
+                        ip: data,
+                        needLocation: true
+                    };
                     break;
                 case 'ipinfoapp':
-                        return {
-                            ip: data.ip,
-                            needLocation: true
-                        };
+                    return {
+                        ip: data.ip,
+                        needLocation: true
+                    };
                     break;
                 default:
                     return {
